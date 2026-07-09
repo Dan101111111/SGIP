@@ -1,0 +1,33 @@
+# =========================
+# SGIP-CAP - Root .gitignore
+# =========================
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Docker
+docker-compose.override.yml
+
+# Coverage / reports
+coverage/
+htmlcov/
+
+# Temp
+tmp/
+*.tmp

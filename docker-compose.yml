@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: sgip-cap-postgres
+    environment:
+      POSTGRES_USER: sgip_user
+      POSTGRES_PASSWORD: sgip_pass
+      POSTGRES_DB: sgip_cap
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - sgip-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: sgip-cap-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - sgip-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: sgip-cap-backend
+    environment:
+      DATABASE_URL: postgresql://sgip_user:sgip_pass@postgres:5432/sgip_cap
+      REDIS_URL: redis://redis:6379
+      DATA_PROVIDER: mock
+      TARGET_DMA: DMA-MO-01
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./apps/backend:/app
+      - ./data:/data
+    networks:
+      - sgip-network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: sgip-cap-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    volumes:
+      - ./apps/frontend:/app
+      - /app/node_modules
+    networks:
+      - sgip-network
+    environment:
+      VITE_API_URL: http://backend:8000
+
+volumes:
+  postgres_data:
+
+networks:
+  sgip-network:
+    driver: bridge
