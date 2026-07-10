@@ -27,7 +27,7 @@ class IncidentTicket(BaseModel):
     """ITIL Incident ticket model"""
     id: Optional[int] = None
     code: str = Field(..., max_length=20)
-    anomaly_id: int
+    anomaly_id: Optional[int] = None
     dma_id: str = Field(..., max_length=50)
     dma_name: str = Field(..., max_length=100)
     title: str = Field(..., max_length=200)

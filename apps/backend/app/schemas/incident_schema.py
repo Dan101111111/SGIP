@@ -6,7 +6,7 @@ from app.domain.incident import IncidentPriority, IncidentStatus
 
 class IncidentCreate(BaseModel):
     """Schema for creating an incident"""
-    anomaly_id: int
+    anomaly_id: Optional[int] = None
     dma_id: str
     title: str
     description: str
@@ -28,7 +28,7 @@ class IncidentResponse(BaseModel):
     """Response schema for incidents"""
     id: int
     code: str
-    anomaly_id: int
+    anomaly_id: Optional[int] = None
     dma_id: str
     dma_name: str
     title: str

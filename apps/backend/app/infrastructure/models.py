@@ -72,7 +72,7 @@ class IncidentTicketModel(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     code = Column(String(50), unique=True, index=True, nullable=False)
-    anomaly_id = Column(Integer, ForeignKey("anomalies.id"), nullable=False)
+    anomaly_id = Column(Integer, ForeignKey("anomalies.id"), nullable=True)
     dma_id = Column(String(50), ForeignKey("dmas.code"), nullable=False)
     dma_name = Column(String(100), nullable=False)
     title = Column(String(200), nullable=False)

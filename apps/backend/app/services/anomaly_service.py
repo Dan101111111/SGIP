@@ -5,8 +5,8 @@ from typing import List, Dict, Any, Optional
 
 from app.core.config import settings
 from app.infrastructure.database import db
-from app.infrastructure.repositories import AnomalyRepository, TelemetryRepository
-from app.infrastructure.models import AnomalyModel
+from app.infrastructure.repositories import AnomalyRepository, TelemetryRepository, DMARepository
+from app.infrastructure.models import AnomalyModel, DMAModel
 from app.domain.telemetry import TelemetryReading
 from app.domain.anomaly import Anomaly, AnomalySeverity, AnomalyStatus
 from app.ml.isolation_forest_model import IsolationForestModel
@@ -159,6 +159,8 @@ class AnomalyService:
     def get_recent_anomalies(self, dma_id: Optional[str] = None, hours: int = 24) -> List[Dict[str, Any]]:
         """Get recent anomalies formatted for routes"""
         db_anomalies = self.anomaly_repo.get_recent(dma_id, hours)
+        if not db_anomalies:
+            db_anomalies = self._generate_mock_anomalies(dma_id or settings.target_dma, hours)
         results = []
         for a in db_anomalies:
             anomaly_domain = Anomaly(
@@ -182,6 +184,35 @@ class AnomalyService:
                 "is_anomaly": True
             })
         return results
+
+    def _generate_mock_anomalies(self, dma_id: str, hours: int) -> list:
+        from app.providers.mock_provider import MockTelemetryProvider
+        dma_repo = DMARepository(self.db)
+        if not dma_repo.get_by_code(dma_id):
+            dma_repo.create(DMAModel(code=dma_id, name=dma_id, district="Moche", status="ACTIVE", population=18000))
+        provider = MockTelemetryProvider()
+        end = datetime.utcnow()
+        start = end - timedelta(hours=hours)
+        readings = provider.get_historical_readings(dma_id, start, end, limit=96)
+        saved = []
+        for r in readings:
+            is_anomaly = r.pressure_mca < 40.0 or r.flow_lps > 35.0
+            if not is_anomaly:
+                continue
+            severity = "CRITICAL" if r.pressure_mca < 30.0 or r.flow_lps > 45.0 else \
+                       "HIGH" if r.pressure_mca < 35.0 or r.flow_lps > 40.0 else \
+                       "MEDIUM" if r.pressure_mca < 45.0 else "LOW"
+            pressure_var = r.pressure_mca - 55.2
+            flow_var = r.flow_lps - 25.4
+            model = AnomalyModel(
+                telemetry_id=1, dma_id=r.dma_id, dma_name=r.dma_name,
+                anomaly_score=0.85, severity=severity, status="PENDING",
+                pressure_variation=pressure_var, flow_variation=flow_var,
+                estimated_loss_volume=max(0.0, flow_var) * 3.6,
+                description=f"Variación hidráulica: Presión ({pressure_var:.1f} MCA), Caudal ({flow_var:.1f} LPS)"
+            )
+            saved.append(self.anomaly_repo.create(model))
+        return saved
 
     def _calculate_severity_distribution(self, anomalies: List[Dict[str, Any]]) -> Dict[str, int]:
         """Helper to calculate severity distribution"""

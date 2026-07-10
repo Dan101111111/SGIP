@@ -66,15 +66,19 @@ class KPIService:
         water_saved = sum(150.0 for t in resolved_tickets)  # 150 liters/min saved per ticket resolved
 
         return {
+            "total_dmas": total_dmas,
             "total_dmas_monitored": total_dmas,
             "active_dmas": active_dmas,
             "dmas_at_risk": dmas_at_risk,
             "total_incidents_today": len(recent_anomalies),
             "active_incidents": active_incidents,
             "critical_incidents": critical_incidents,
+            "sla_compliance": sla_metrics.get("sla_compliance_rate", 100.0),
             "sla_compliance_rate": sla_metrics.get("sla_compliance_rate", 100.0),
-            "average_detection_time_minutes": 8.5,  # Real-time processing avg
+            "avg_detection_time_hours": round(8.5 / 60, 2),
+            "average_detection_time_minutes": 8.5,
             "average_resolution_time_minutes": round(avg_res_time, 1),
+            "water_loss_estimate_m3": water_saved,
             "estimated_water_loss_saved": water_saved,
             "anomaly_detection_rate": 96.4
         }

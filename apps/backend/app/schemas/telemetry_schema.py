@@ -5,7 +5,7 @@ from typing import Optional, List
 
 class TelemetryResponse(BaseModel):
     """Response schema for telemetry data"""
-    id: int
+    id: Optional[int] = None
     timestamp: datetime
     dma_id: str
     dma_name: str
@@ -15,7 +15,7 @@ class TelemetryResponse(BaseModel):
     source: str
     quality_flag: str
     temperature: Optional[float] = None
-    status: str
+    status: str = "ACTIVE"
 
 
 class TelemetryHistoryResponse(BaseModel):
