@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply text-gray-800 antialiased;
+  }
+}
+
+@layer components {
+  .kpi-card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-100 p-5 transition-all hover:shadow-md;
+  }
+  .status-badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+  .status-badge-normal {
+    @apply status-badge bg-green-100 text-green-800;
+  }
+  .status-badge-warning {
+    @apply status-badge bg-yellow-100 text-yellow-800;
+  }
+  .status-badge-critical {
+    @apply status-badge bg-red-100 text-red-800;
+  }
+  .status-badge-info {
+    @apply status-badge bg-blue-100 text-blue-800;
+  }
+  .status-badge-new {
+    @apply status-badge bg-purple-100 text-purple-800;
+  }
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  border-radius: 0.75rem;
+}

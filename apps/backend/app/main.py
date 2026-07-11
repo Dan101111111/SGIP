@@ -1,4 +1,4 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
@@ -11,8 +11,10 @@ from app.api import (
 )
 from app.api.routes_alerts import router as alerts_router
 from app.api.routes_reports import router as reports_router
+from app.api.routes_auth import router as auth_router
 from app.core.config import settings
 from app.core.exceptions import SGIPCAPException
+from app.core.security import get_optional_user
 from app.infrastructure.database import db
 from app.websocket.websocket_handler import WebSocketHandler
 from datetime import datetime
@@ -35,14 +37,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(telemetry_router)
-app.include_router(anomalies_router)
-app.include_router(incidents_router)
-app.include_router(kpis_router)
-app.include_router(dmas_router)
-app.include_router(alerts_router)
-app.include_router(reports_router)
+# Include routers (auth router without dependency)
+app.include_router(auth_router)
+
+# All other routers require optional auth
+app.include_router(telemetry_router, dependencies=[Depends(get_optional_user)])
+app.include_router(anomalies_router, dependencies=[Depends(get_optional_user)])
+app.include_router(incidents_router, dependencies=[Depends(get_optional_user)])
+app.include_router(kpis_router, dependencies=[Depends(get_optional_user)])
+app.include_router(dmas_router, dependencies=[Depends(get_optional_user)])
+app.include_router(alerts_router, dependencies=[Depends(get_optional_user)])
+app.include_router(reports_router, dependencies=[Depends(get_optional_user)])
 
 # WebSocket handler
 ws_handler = WebSocketHandler()

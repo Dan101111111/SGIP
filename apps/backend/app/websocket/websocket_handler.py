@@ -31,8 +31,10 @@ class WebSocketHandler:
                         "timestamp": reading.timestamp.isoformat(),
                         "dma_id": reading.dma_id,
                         "dma_name": reading.dma_name,
+                        "sensor_id": reading.sensor_id,
                         "pressure_mca": reading.pressure_mca,
                         "flow_lps": reading.flow_lps,
+                        "source": reading.source,
                         "quality_flag": reading.quality_flag
                     })
                 

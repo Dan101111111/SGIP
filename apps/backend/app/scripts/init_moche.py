@@ -11,6 +11,7 @@ from app.services.anomaly_service import AnomalyService
 from app.services.incident_service import IncidentService
 from app.services.kpi_service import KPIService
 from app.core.config import settings
+from app.infrastructure.database import db
 import json
 from datetime import datetime
 
@@ -19,6 +20,9 @@ def init_moche_system():
     """Inicializar sistema con datos de Moche"""
     print("🚀 Inicializando SGIP-CAP para el sector Moche...")
     print(f"📍 DMA objetivo: {settings.target_dma}")
+
+    # Crear tablas si no existen
+    db.create_tables()
     
     # Inicializar servicios
     telemetry = TelemetryService()
