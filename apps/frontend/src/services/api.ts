@@ -82,6 +82,13 @@ export const api = {
     weekly: () => fetchJson<Record<string, unknown>>('/reports/weekly'),
     mocheDaily: (date?: string) => fetchJson<Record<string, unknown>>(`/reports/moche/daily${date ? `?date=${date}` : ''}`),
     mocheWeekly: () => fetchJson<Record<string, unknown>>('/reports/moche/weekly'),
+    mocheCustom: (start: string, end: string) => fetchJson<Record<string, unknown>>(`/reports/moche/custom?start_date=${start}T00:00:00&end_date=${end}T23:59:59`),
+    exportReport: (type: 'daily' | 'weekly' | 'custom', format: 'xlsx' | 'pdf', date?: string, start?: string, end?: string) => {
+      let query = `?format=${format}`;
+      if (type === 'daily' && date) query += `&date=${date}`;
+      if (type === 'custom' && start && end) query += `&start_date=${start}T00:00:00&end_date=${end}T23:59:59`;
+      return fetchJson<{ content: string; filename: string; format: string }>(`/reports/export/${type}${query}`);
+    },
   },
 };
 

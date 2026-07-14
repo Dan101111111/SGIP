@@ -7,7 +7,7 @@ import random
 from app.core.config import settings
 from app.infrastructure.database import db
 from app.infrastructure.repositories import IncidentRepository, AnomalyRepository, DMARepository
-from app.infrastructure.models import IncidentTicketModel, DMAModel
+from app.infrastructure.models import IncidentTicketModel, DMAModel, AnomalyModel
 from app.domain.incident import IncidentTicket, IncidentPriority, IncidentStatus
 from app.domain.anomaly import Anomaly, AnomalySeverity
 from app.core.exceptions import NotFoundException, ValidationException
@@ -168,6 +168,9 @@ class IncidentService:
         dma_repo = DMARepository(self.db)
         if not dma_repo.get_by_code(dma_id):
             dma_repo.create(DMAModel(code=dma_id, name=dma_id, district="Moche", status="ACTIVE", population=18000))
+            
+        anomaly_repo = AnomalyRepository(self.db)
+        
         now = datetime.utcnow()
         scenarios = [
             ("Incidencia por fuga en red primaria", "CRITICAL"),
@@ -183,9 +186,22 @@ class IncidentService:
             sla_hours = {"CRITICAL": 2, "HIGH": 4, "MEDIUM": 8, "LOW": 24}
             sla_due = created + timedelta(hours=sla_hours.get(priority, 8))
             resolved = created + timedelta(hours=random.randint(1, 6)) if sk in ("RESOLVED", "CLOSED") else None
+            
+            # Create mock anomaly to satisfy database constraint
+            mock_anomaly = AnomalyModel(
+                telemetry_id=i+1,
+                dma_id=dma_id,
+                dma_name=dma_id,
+                anomaly_score=0.9 if priority in ["CRITICAL", "HIGH"] else 0.6,
+                severity=priority,
+                status="CONFIRMED",
+                detected_at=created - timedelta(minutes=10)
+            )
+            saved_anomaly = anomaly_repo.create(mock_anomaly)
+            
             model = IncidentTicketModel(
                 code=f"INC-{created.strftime('%Y%m%d')}-{i+1:03d}",
-                anomaly_id=None, dma_id=dma_id, dma_name=dma_id,
+                anomaly_id=saved_anomaly.id, dma_id=dma_id, dma_name=dma_id,
                 title=title, description=title,
                 priority=priority, status=sk,
                 created_at=created, updated_at=now,

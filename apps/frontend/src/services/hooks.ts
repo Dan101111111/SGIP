@@ -77,9 +77,17 @@ export function useWaterLoss() {
 }
 
 export function useDailyReport(date?: string) {
-  return useQuery({ queryKey: ['report-daily', date], queryFn: () => api.reports.daily(date) });
+  return useQuery({ queryKey: ['report-daily', date], queryFn: () => api.reports.mocheDaily(date) });
 }
 
 export function useWeeklyReport() {
-  return useQuery({ queryKey: ['report-weekly'], queryFn: api.reports.weekly });
+  return useQuery({ queryKey: ['report-weekly'], queryFn: api.reports.mocheWeekly });
+}
+
+export function useCustomReport(startDate: string, endDate: string) {
+  return useQuery({
+    queryKey: ['report-custom', startDate, endDate],
+    queryFn: () => api.reports.mocheCustom(startDate, endDate),
+    enabled: !!startDate && !!endDate,
+  });
 }
