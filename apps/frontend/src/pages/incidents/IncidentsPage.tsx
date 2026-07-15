@@ -8,6 +8,16 @@ import clsx from 'clsx';
 const statusFilters = ['TODOS', 'NEW', 'CLASSIFIED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'];
 const priorityFilters = ['TODOS', 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
 
+const translateStatus = (s: string) => {
+  const map: Record<string, string> = { TODOS: 'Todos', NEW: 'Nuevo', CLASSIFIED: 'Clasificado', ASSIGNED: 'Asignado', IN_PROGRESS: 'En Progreso', RESOLVED: 'Resuelto', CLOSED: 'Cerrado' };
+  return map[s] || s;
+};
+
+const translatePriority = (p: string) => {
+  const map: Record<string, string> = { TODOS: 'Todos', CRITICAL: 'Crítico', HIGH: 'Alta', MEDIUM: 'Media', LOW: 'Baja' };
+  return map[p] || p;
+};
+
 export default function IncidentsPage() {
   const [statusFilter, setStatusFilter] = useState('TODOS');
   const [priorityFilter, setPriorityFilter] = useState('TODOS');
@@ -56,7 +66,7 @@ export default function IncidentsPage() {
               <button key={p} onClick={() => setPriorityFilter(p)}
                 className={clsx('px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
                   priorityFilter === p ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')}>
-                {p === 'TODOS' ? 'Todos' : p}</button>
+                {translatePriority(p)}</button>
             ))}
           </div>
         </div>
@@ -65,7 +75,7 @@ export default function IncidentsPage() {
             <button key={s} onClick={() => setStatusFilter(s)}
               className={clsx('px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
                 statusFilter === s ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')}>
-              {s === 'TODOS' ? 'Todos' : s.replace(/_/g, ' ')}</button>
+              {translateStatus(s)}</button>
           ))}
         </div>
 

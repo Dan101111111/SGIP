@@ -175,6 +175,8 @@ async def export_report(
                 "incidents_created": len(incidents),
                 "incidents_resolved": len([i for i in incidents if i.status.value in ["RESOLVED", "CLOSED"]])
             },
+            "anomalies_list": [{"id": a.get("anomaly").id if a.get("anomaly") else a.get("id", "N/A"), "date": (a.get("anomaly").detected_at.isoformat() if a.get("anomaly") and a.get("anomaly").detected_at else a.get("detected_at", "")), "severity": (a.get("anomaly").severity.value if a.get("anomaly") and hasattr(a.get("anomaly").severity, "value") else a.get("severity", "")), "status": (a.get("anomaly").status.value if a.get("anomaly") and hasattr(a.get("anomaly").status, "value") else a.get("status", ""))} for a in anomalies],
+            "incidents_list": [{"code": i.code, "title": i.title, "priority": i.priority.value if hasattr(i.priority, 'value') else i.priority, "status": i.status.value if hasattr(i.status, 'value') else i.status, "date": i.created_at.isoformat()} for i in incidents],
             "generated_at": datetime.utcnow().isoformat()
         }
         title = f"Reporte Personalizado: {start_date.strftime('%Y-%m-%d')} a {end_date.strftime('%Y-%m-%d')}"
@@ -232,6 +234,18 @@ async def export_report(
             writer.writerow(["Anomalías Detectadas", stats.get("anomalies_detected")])
             writer.writerow(["Incidentes Creados", stats.get("incidents_created")])
             writer.writerow(["Incidentes Resueltos", stats.get("incidents_resolved")])
+            
+            writer.writerow([])
+            writer.writerow(["DETALLES DE ANOMALÍAS"])
+            writer.writerow(["ID", "Fecha", "Severidad", "Estado"])
+            for a in report.get("anomalies_list", []):
+                writer.writerow([a.get("id"), a.get("date"), a.get("severity"), a.get("status")])
+                
+            writer.writerow([])
+            writer.writerow(["DETALLES DE INCIDENTES"])
+            writer.writerow(["Código", "Título", "Prioridad", "Estado", "Fecha"])
+            for i in report.get("incidents_list", []):
+                writer.writerow([i.get("code"), i.get("title"), i.get("priority"), i.get("status"), i.get("date")])
             
         import base64
         return {
@@ -339,6 +353,30 @@ async def export_report(
             ws.append(["Anomalías Detectadas", stats.get("anomalies_detected")])
             ws.append(["Incidentes Creados", stats.get("incidents_created")])
             ws.append(["Incidentes Resueltos", stats.get("incidents_resolved")])
+            
+            ws.append([])
+            ws.append(["DETALLES DE ANOMALÍAS"])
+            r = ws.max_row
+            ws.cell(row=r, column=1).font = Font(bold=True)
+            headers = ["ID", "Fecha", "Severidad", "Estado"]
+            ws.append(headers)
+            for cell in ws[r+1]:
+                cell.font = header_font
+                cell.fill = header_fill
+            for a in report.get("anomalies_list", []):
+                ws.append([a.get("id"), a.get("date"), a.get("severity"), a.get("status")])
+                
+            ws.append([])
+            ws.append(["DETALLES DE INCIDENTES"])
+            r = ws.max_row
+            ws.cell(row=r, column=1).font = Font(bold=True)
+            headers = ["Código", "Título", "Prioridad", "Estado", "Fecha"]
+            ws.append(headers)
+            for cell in ws[r+1]:
+                cell.font = header_font
+                cell.fill = header_fill
+            for i in report.get("incidents_list", []):
+                ws.append([i.get("code"), i.get("title"), i.get("priority"), i.get("status"), i.get("date")])
             
         output = BytesIO()
         wb.save(output)
@@ -460,6 +498,36 @@ async def export_report(
             pdf.metric_row("Anomalías Detectadas", stats.get("anomalies_detected", 0))
             pdf.metric_row("Incidentes Creados", stats.get("incidents_created", 0))
             pdf.metric_row("Incidentes Resueltos", stats.get("incidents_resolved", 0))
+            
+            pdf.ln(10)
+            pdf.chapter_title("Detalles de Anomalías")
+            pdf.set_font("helvetica", "B", 9)
+            pdf.set_fill_color(220, 220, 220)
+            pdf.cell(30, 7, "ID", border=1, fill=True, align="C")
+            pdf.cell(50, 7, "Fecha", border=1, fill=True, align="C")
+            pdf.cell(40, 7, "Severidad", border=1, fill=True, align="C")
+            pdf.cell(40, 7, "Estado", border=1, fill=True, align="C", ln=True)
+            pdf.set_font("helvetica", "", 9)
+            for a in report.get("anomalies_list", []):
+                pdf.cell(30, 7, str(a.get("id", "")), border=1, align="C")
+                pdf.cell(50, 7, str(a.get("date", "")).split("T")[0] if "T" in str(a.get("date", "")) else str(a.get("date", "")), border=1, align="C")
+                pdf.cell(40, 7, str(a.get("severity", "")), border=1, align="C")
+                pdf.cell(40, 7, str(a.get("status", "")), border=1, align="C", ln=True)
+                
+            pdf.ln(10)
+            pdf.chapter_title("Detalles de Incidentes")
+            pdf.set_font("helvetica", "B", 9)
+            pdf.set_fill_color(220, 220, 220)
+            pdf.cell(35, 7, "Código", border=1, fill=True, align="C")
+            pdf.cell(65, 7, "Título", border=1, fill=True, align="C")
+            pdf.cell(30, 7, "Prioridad", border=1, fill=True, align="C")
+            pdf.cell(30, 7, "Estado", border=1, fill=True, align="C", ln=True)
+            pdf.set_font("helvetica", "", 9)
+            for i in report.get("incidents_list", []):
+                pdf.cell(35, 7, str(i.get("code", "")), border=1, align="C")
+                pdf.cell(65, 7, str(i.get("title", ""))[:30], border=1, align="C")
+                pdf.cell(30, 7, str(i.get("priority", "")), border=1, align="C")
+                pdf.cell(30, 7, str(i.get("status", "")), border=1, align="C", ln=True)
             
         pdf_bytes = pdf.output(dest='S')
         
